@@ -676,6 +676,12 @@ FlatCOptions FlatCompiler::ParseFromCommandLineArguments(int argc,
         opts.python_no_type_prefix_suffix = true;
       } else if (arg == "--python-typing") {
         opts.python_typing = true;
+      } else if (arg.rfind("--python-import-override=", 0) == 0) {
+        opts.python_import_override =
+            arg.substr(std::string("--python-import_override=").size());
+      } else if (arg == "--python-import-override") {
+        if (++argi >= argc) Error("missing value following: " + arg, true);
+        opts.python_import_override = argv[argi];
       } else if (arg.rfind("--python-version=", 0) == 0) {
         opts.python_version =
             arg.substr(std::string("--python-version=").size());

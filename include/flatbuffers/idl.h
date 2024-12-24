@@ -723,6 +723,9 @@ struct IDLOptions {
   // https://docs.python.org/3/faq/general.html#how-does-the-python-version-numbering-scheme-work
   std::string python_version;
 
+  // Override for the base schema import. Useful when moving the schema files around
+  std::string python_import_override;
+
   // Whether to generate numpy helpers.
   bool python_gen_numpy;
 

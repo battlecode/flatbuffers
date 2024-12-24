@@ -41,6 +41,28 @@ namespace python {
 
 namespace {
 
+// Special namer that supports import namespace overriding
+class PyNamer : public IdlNamer {
+ public:
+  using Namer::Namespace;
+  using Namer::NamespacedType;
+
+  explicit PyNamer(Config config, std::string namespace_override, std::set<std::string> keywords)
+      : IdlNamer(config, std::move(keywords)), namespace_override(namespace_override) {}
+
+  std::string NamespacedType(const Definition &def) const {
+    auto ns = def.defined_namespace;
+    std::string str = Type(def.name);
+    std::string ret;
+    if (!namespace_override.empty()) { ret += namespace_override; }
+    else if (ns != nullptr) { ret += Namespace(ns->components); }
+    if (!ret.empty()) ret += config_.namespace_seperator;
+    return ret + str;
+  }
+ private:
+  std::string namespace_override;
+};
+
 typedef std::pair<std::string, std::string> ImportMapEntry;
 typedef std::set<ImportMapEntry> ImportMap;
 
@@ -54,6 +76,7 @@ class PythonStubGenerator {
                       const Version &version)
       : parser_{parser},
         namer_{WithFlagOptions(kStubConfig, parser.opts, path),
+               parser.opts.python_import_override,
                Keywords(version)},
         version_(version) {}
 
@@ -605,7 +628,7 @@ class PythonStubGenerator {
   }
 
   const Parser &parser_;
-  const IdlNamer namer_;
+  const PyNamer namer_;
   const Version version_;
 };}  // namespace
 
@@ -617,6 +640,7 @@ class PythonGenerator : public BaseGenerator {
                       "" /* not used */, "py"),
         float_const_gen_("float('nan')", "float('inf')", "float('-inf')"),
         namer_(WithFlagOptions(kConfig, parser.opts, path),
+               parser.opts.python_import_override,
                Keywords(version)) {}
 
   // Most field accessors need to retrieve and test the field offset first,
@@ -2741,7 +2765,7 @@ class PythonGenerator : public BaseGenerator {
 
  private:
   const SimpleFloatConstantGenerator float_const_gen_;
-  const IdlNamer namer_;
+  const PyNamer namer_;
 };
 
 }  // namespace python
